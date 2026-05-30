@@ -1,0 +1,831 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hermes Agent 踩坑全紀錄 · 教學簡報</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700;800&family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#0E1116;
+    --ink-2:#151A21;
+    --ink-3:#1C232C;
+    --line:#2A333E;
+    --fg:#E7ECF2;
+    --fg-dim:#9AA6B2;
+    --fg-faint:#5E6975;
+    --amber:#FFB454;       /* 踩坑 / 警告 */
+    --teal:#34D6BE;        /* 解法 */
+    --green:#5BE08A;       /* 正確 */
+    --red:#FB7185;         /* 反模式 */
+    --blue:#6FB3FF;        /* 指令/中性強調 */
+    --mono:'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,monospace;
+    --sans:'Noto Sans TC','PingFang TC','Microsoft JhengHei',sans-serif;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html,body{height:100%;overflow:hidden;background:var(--ink);color:var(--fg);font-family:var(--sans)}
+  body{
+    background-image:
+      radial-gradient(900px 600px at 85% -10%, rgba(52,214,190,.06), transparent 60%),
+      radial-gradient(800px 600px at 0% 110%, rgba(255,180,84,.05), transparent 55%);
+  }
+
+  /* ---------- deck ---------- */
+  .deck{position:fixed;inset:0;display:flex;align-items:center;justify-content:center}
+  .slide{
+    position:absolute;inset:0;
+    display:none;
+    padding:clamp(28px,5vw,84px);
+    flex-direction:column;
+    opacity:0;transform:translateY(14px);
+    transition:opacity .5s ease,transform .5s ease;
+  }
+  .slide.active{display:flex;opacity:1;transform:none}
+  .inner{margin:auto;width:100%;max-width:1180px}
+
+  /* ---------- typography ---------- */
+  .kicker{
+    font-family:var(--mono);font-size:clamp(11px,1.3vw,14px);letter-spacing:.22em;
+    text-transform:uppercase;color:var(--fg-faint);display:flex;align-items:center;gap:10px;margin-bottom:18px;
+  }
+  .kicker .dot{width:7px;height:7px;border-radius:50%;background:var(--amber);box-shadow:0 0 12px var(--amber)}
+  h1{font-size:clamp(34px,6vw,76px);font-weight:900;line-height:1.04;letter-spacing:-.01em}
+  h2{font-size:clamp(26px,4.2vw,50px);font-weight:900;line-height:1.1;letter-spacing:-.01em;margin-bottom:8px}
+  .sub{font-size:clamp(15px,1.9vw,22px);color:var(--fg-dim);font-weight:500;line-height:1.55}
+  .lead{font-size:clamp(17px,2.2vw,26px);line-height:1.6;font-weight:500}
+  p{line-height:1.6}
+  .hl{color:var(--amber)}
+  .hl-t{color:var(--teal)}
+  .hl-g{color:var(--green)}
+  .hl-r{color:var(--red)}
+  .hl-b{color:var(--blue)}
+  code,.mono{font-family:var(--mono)}
+
+  /* ---------- code block ---------- */
+  .cmd{
+    margin-top:18px;background:#0A0D12;border:1px solid var(--line);border-radius:12px;overflow:hidden;
+    box-shadow:0 18px 40px rgba(0,0,0,.35);
+  }
+  .cmd .bar{display:flex;align-items:center;gap:7px;padding:10px 14px;border-bottom:1px solid var(--line);background:var(--ink-2)}
+  .cmd .bar i{width:11px;height:11px;border-radius:50%;display:inline-block}
+  .cmd .bar i:nth-child(1){background:#FF5F57}.cmd .bar i:nth-child(2){background:#FEBC2E}.cmd .bar i:nth-child(3){background:#28C840}
+  .cmd .bar span{margin-left:8px;font-family:var(--mono);font-size:12px;color:var(--fg-faint)}
+  .cmd pre{padding:16px 18px;font-family:var(--mono);font-size:clamp(13px,1.55vw,17px);line-height:1.7;color:#D7E3EF;overflow-x:auto;white-space:pre-wrap;word-break:break-all}
+  .cmd .prompt{color:var(--teal)}
+  .cmd .comment{color:var(--fg-faint)}
+
+  /* inline chip */
+  .chip{font-family:var(--mono);font-size:.86em;background:var(--ink-3);border:1px solid var(--line);
+    border-radius:6px;padding:2px 8px;color:var(--blue);white-space:nowrap}
+
+  /* ---------- cards / grids ---------- */
+  .grid{display:grid;gap:16px;margin-top:22px}
+  .g2{grid-template-columns:1fr 1fr}
+  .g3{grid-template-columns:repeat(3,1fr)}
+  .card{
+    background:linear-gradient(180deg,var(--ink-2),var(--ink));
+    border:1px solid var(--line);border-radius:14px;padding:20px 22px;
+  }
+  .card .t{font-weight:700;font-size:clamp(16px,1.9vw,21px);margin-bottom:8px;display:flex;gap:10px;align-items:baseline}
+  .card .d{color:var(--fg-dim);font-size:clamp(13px,1.55vw,16px);line-height:1.6}
+  .num{font-family:var(--mono);font-weight:800;color:var(--amber);font-size:.95em}
+
+  /* pitfall list rows */
+  .rows{display:flex;flex-direction:column;gap:12px;margin-top:20px}
+  .row{display:grid;grid-template-columns:auto 1fr;gap:16px;align-items:start;
+    background:var(--ink-2);border:1px solid var(--line);border-radius:12px;padding:14px 18px}
+  .row .pit{font-family:var(--mono);font-weight:800;color:var(--amber);font-size:clamp(13px,1.6vw,16px);
+    background:rgba(255,180,84,.1);border:1px solid rgba(255,180,84,.3);border-radius:8px;padding:5px 10px;white-space:nowrap}
+  .row .body{font-size:clamp(13px,1.55vw,16px);line-height:1.55}
+  .row .body b{color:var(--fg)}
+  .row .fix{color:var(--teal)}
+
+  /* compare two columns ❌ ✅ */
+  .vs{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:22px}
+  .vs .col{border-radius:14px;padding:20px 22px;border:1px solid var(--line)}
+  .vs .bad{background:rgba(251,113,133,.06);border-color:rgba(251,113,133,.35)}
+  .vs .good{background:rgba(91,224,138,.06);border-color:rgba(91,224,138,.35)}
+  .vs h3{font-size:clamp(16px,2vw,22px);margin-bottom:12px;display:flex;align-items:center;gap:10px}
+  .vs .bad h3{color:var(--red)}.vs .good h3{color:var(--green)}
+  .vs ul{list-style:none;display:flex;flex-direction:column;gap:9px}
+  .vs li{font-size:clamp(13px,1.55vw,16px);line-height:1.5;padding-left:20px;position:relative;color:var(--fg-dim)}
+  .vs li::before{position:absolute;left:0;top:0}
+  .vs .bad li::before{content:"✕";color:var(--red)}
+  .vs .good li::before{content:"✓";color:var(--green)}
+
+  /* big number / takeaway */
+  .bignum{font-family:var(--mono);font-weight:800;font-size:clamp(64px,13vw,150px);line-height:.9;color:var(--amber)}
+  .takeaway{border-left:4px solid var(--teal);padding:6px 0 6px 24px;margin-top:8px}
+
+  ul.clean{list-style:none;display:flex;flex-direction:column;gap:13px;margin-top:20px}
+  ul.clean li{font-size:clamp(15px,1.85vw,20px);line-height:1.5;padding-left:30px;position:relative;color:var(--fg-dim)}
+  ul.clean li::before{content:attr(data-n);position:absolute;left:0;top:1px;font-family:var(--mono);font-weight:800;color:var(--teal);font-size:.85em}
+  ul.clean li b{color:var(--fg);font-weight:700}
+
+  /* table */
+  table{width:100%;border-collapse:collapse;margin-top:20px;font-size:clamp(13px,1.6vw,17px)}
+  th,td{text-align:left;padding:11px 14px;border-bottom:1px solid var(--line)}
+  th{font-family:var(--mono);font-size:.82em;letter-spacing:.05em;text-transform:uppercase;color:var(--fg-faint);font-weight:700}
+  td:first-child{color:var(--fg-dim)}
+  td .mono{color:var(--blue)}
+
+  /* divider slides */
+  .divider .inner{max-width:980px}
+  .divider .stage-no{font-family:var(--mono);font-size:clamp(15px,2vw,22px);color:var(--fg-faint);letter-spacing:.3em;margin-bottom:14px}
+  .divider h1{font-size:clamp(40px,8vw,92px)}
+  .stage-meta{margin-top:22px;display:flex;gap:14px;flex-wrap:wrap}
+  .pill{font-family:var(--mono);font-size:clamp(12px,1.5vw,15px);border:1px solid var(--line);background:var(--ink-2);
+    border-radius:999px;padding:7px 16px;color:var(--fg-dim)}
+
+  /* cover */
+  .cover .inner{max-width:1040px}
+  .cover .meta{margin-top:28px;display:flex;gap:12px;flex-wrap:wrap;font-family:var(--mono);font-size:clamp(12px,1.5vw,15px)}
+  .cover .meta span{border:1px solid var(--line);background:var(--ink-2);border-radius:8px;padding:7px 14px;color:var(--fg-dim)}
+  .cursor{display:inline-block;width:.6ch;height:1em;background:var(--amber);margin-left:4px;transform:translateY(.12em);animation:blink 1.05s steps(1) infinite}
+  @keyframes blink{50%{opacity:0}}
+
+  /* footer chrome */
+  .chrome{position:fixed;left:0;right:0;bottom:0;height:5px;background:var(--ink-3);z-index:30}
+  .chrome .fill{height:100%;background:linear-gradient(90deg,var(--amber),var(--teal));transition:width .45s ease;box-shadow:0 0 14px rgba(52,214,190,.4)}
+  .hud{position:fixed;bottom:16px;right:20px;z-index:30;font-family:var(--mono);font-size:12px;color:var(--fg-faint);
+    display:flex;align-items:center;gap:14px;user-select:none}
+  .hud .nav{display:flex;gap:6px}
+  .hud button{font-family:var(--mono);background:var(--ink-2);color:var(--fg-dim);border:1px solid var(--line);
+    border-radius:8px;width:32px;height:30px;cursor:pointer;font-size:15px;transition:.15s}
+  .hud button:hover{color:var(--fg);border-color:var(--fg-faint)}
+  .hud .count b{color:var(--amber)}
+  .brand{position:fixed;top:18px;left:clamp(20px,5vw,84px);z-index:30;font-family:var(--mono);font-size:12px;
+    letter-spacing:.18em;color:var(--fg-faint);text-transform:uppercase}
+  .brand b{color:var(--teal)}
+
+  .stagger>*{opacity:0;transform:translateY(12px);animation:rise .55s ease forwards}
+  .slide.active .stagger>*{animation-play-state:running}
+  @keyframes rise{to{opacity:1;transform:none}}
+  .stagger>*:nth-child(1){animation-delay:.05s}
+  .stagger>*:nth-child(2){animation-delay:.14s}
+  .stagger>*:nth-child(3){animation-delay:.23s}
+  .stagger>*:nth-child(4){animation-delay:.32s}
+  .stagger>*:nth-child(5){animation-delay:.41s}
+  .stagger>*:nth-child(6){animation-delay:.50s}
+
+  .note{margin-top:18px;font-size:clamp(12px,1.5vw,15px);color:var(--fg-faint);font-family:var(--mono)}
+
+  /* OS stack infographic */
+  .oslayer{display:flex;align-items:center;justify-content:space-between;gap:14px;
+    background:var(--ink-2);border:1px solid var(--line);border-radius:12px;padding:15px 18px}
+  .oslayer b{font-size:clamp(16px,2vw,21px);font-weight:800}
+  .oslayer .osd{display:block;color:var(--fg-dim);font-size:clamp(12px,1.45vw,15px);margin-top:3px;line-height:1.4}
+  .oslayer.star{background:rgba(255,180,84,.07);border-color:rgba(255,180,84,.45);box-shadow:0 0 0 1px rgba(255,180,84,.15)}
+  .osbadge{font-family:var(--mono);font-size:clamp(13px,1.6vw,18px);font-weight:800;color:var(--fg-faint);
+    border:1px solid var(--line);border-radius:8px;padding:6px 12px;white-space:nowrap}
+
+  /* fallback ref page */
+  table.fb td:first-child{color:var(--blue);font-family:var(--mono);font-size:.9em}
+  table.fb td .tag{font-family:var(--mono);font-size:.82em;color:var(--teal);white-space:nowrap}
+  .steps{display:flex;flex-direction:column;gap:8px;margin-top:6px}
+  .steps li{list-style:none;font-size:clamp(12px,1.5vw,15px);line-height:1.45;padding-left:26px;position:relative;color:var(--fg-dim)}
+  .steps li::before{content:attr(data-n);position:absolute;left:0;top:0;font-family:var(--mono);font-weight:800;color:var(--teal);font-size:.85em}
+  .steps li b{color:var(--fg)}
+  .warnbar{margin-top:14px;border-left:3px solid var(--amber);background:rgba(255,180,84,.06);
+    padding:10px 16px;border-radius:0 8px 8px 0;font-size:clamp(12px,1.5vw,15px);color:var(--fg-dim);line-height:1.5}
+  .warnbar b{color:var(--amber)}
+
+  /* architecture / evolution page */
+  .archwrap{margin-top:16px;background:#0A0D12;border:1px solid var(--line);border-radius:14px;padding:18px 20px}
+  .evo{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:18px}
+  .evo .col{border-radius:12px;padding:16px 18px;border:1px solid var(--line)}
+  .evo .was{background:rgba(251,113,133,.05);border-color:rgba(251,113,133,.28)}
+  .evo .now{background:rgba(52,214,190,.06);border-color:rgba(52,214,190,.4)}
+  .evo h3{font-size:clamp(15px,1.9vw,20px);margin-bottom:10px;display:flex;align-items:center;gap:8px}
+  .evo .was h3{color:var(--red)}.evo .now h3{color:var(--teal)}
+  .evo .r{display:flex;justify-content:space-between;gap:10px;font-size:clamp(12px,1.5vw,15px);padding:5px 0;border-bottom:1px dashed var(--line);color:var(--fg-dim)}
+  .evo .r:last-child{border-bottom:none}
+  .evo .r b{color:var(--fg);font-weight:600}
+  .evo .r .v{font-family:var(--mono);font-size:.88em;text-align:right;white-space:nowrap}
+  .evo .now .v{color:var(--teal)}.evo .was .v{color:var(--fg-faint)}
+
+  @media (max-width:720px){
+    .g2,.g3,.vs{grid-template-columns:1fr}
+    .row{grid-template-columns:1fr;gap:8px}
+    .brand{display:none}
+    table{font-size:12px}
+    th,td{padding:8px}
+  }
+</style>
+</head>
+<body>
+
+<div class="brand"><b>HERMES</b> AGENT · 踩坑教學</div>
+
+<div class="deck" id="deck">
+
+  <!-- 1 · 封面 -->
+  <section class="slide cover active">
+    <div class="inner stagger">
+      <div class="kicker"><span class="dot"></span>NOUS RESEARCH · HERMES AGENT v0.14.0</div>
+      <h1>在 Windows 上馴服<br>一隻 <span class="hl-t">AI Agent</span><span class="cursor"></span></h1>
+      <p class="sub" style="margin-top:22px">從零安裝、接通 Telegram、設定每日自動文獻推播——<br>一份踩過 <span class="hl">20 個坑</span> 換來的實戰教學。</p>
+      <div class="meta">
+        <span>OS · Windows 10</span>
+        <span>Model · Gemini 3 Flash（免費）</span>
+        <span>Bot · Telegram</span>
+        <span>2026-05-26</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- 2 · 引言：Harness = AI 的作業系統 (infographic) -->
+  <section class="slide">
+    <div class="inner stagger">
+      <div class="kicker"><span class="dot"></span>引言 · INTRODUCTION</div>
+      <h2>Harness ＝ AI 的<span class="hl-t">作業系統</span></h2>
+      <p class="sub">2026 的範式轉移：模型被商品化，勝負移到「包在模型外面那層」。一句話——<span class="hl">Agent ＝ Model ＋ Harness</span>。</p>
+      <div class="grid g2" style="margin-top:22px;align-items:start">
+        <div style="display:flex;flex-direction:column;gap:10px">
+          <div class="oslayer"><div><b>Agent</b><span class="osd">跑在上面的具體應用，例如 Hermes</span></div><span class="osbadge">App</span></div>
+          <div class="oslayer star"><div><b>Harness</b><span class="osd">工具驅動 · 記憶 · 排程 · 安全 · 容錯</span></div><span class="osbadge" style="color:var(--amber);border-color:rgba(255,180,84,.5)">OS</span></div>
+          <div class="oslayer"><div><b>Context Window</b><span class="osd">有限的工作記憶</span></div><span class="osbadge">RAM</span></div>
+          <div class="oslayer"><div><b>Model</b><span class="osd">原始推理力（凍結的計算器）</span></div><span class="osbadge">CPU</span></div>
+        </div>
+        <div class="card">
+          <div class="t">這個「OS」在管什麼？</div>
+          <div style="display:flex;flex-wrap:wrap;gap:8px;margin:10px 0 16px">
+            <span class="pill">工具調度</span><span class="pill">記憶持久化</span><span class="pill">安全 / 人類審核</span>
+            <span class="pill">多步編排</span><span class="pill">子代理</span><span class="pill">容錯降級</span>
+          </div>
+          <div class="d">模型負責「推理」，harness 負責「讓推理變成<b style="color:var(--fg)">可靠、可重複</b>的行動」。<br><span class="hl-t">模型再聰明，沒有好的 OS，也跑不出可靠的 agent。</span></div>
+        </div>
+      </div>
+      <p class="note">＊ 概念來源：OpenAI Codex 團隊「harness engineering」、Philipp Schmid 的電腦類比（2026）。</p>
+    </div>
+  </section>
+
+  <!-- 3 · 比較：Harness AI vs Hermes Agent -->
+  <section class="slide">
+    <div class="inner stagger">
+      <div class="kicker"><span class="dot"></span>引言 · 定位 Hermes 在哪一層</div>
+      <h2><span class="hl-t">Harness AI</span> vs <span class="hl">Hermes Agent</span></h2>
+      <table>
+        <thead><tr><th>維度</th><th>Harness AI（範式 / OS 層）</th><th>Hermes Agent（成品 / App）</th></tr></thead>
+        <tbody>
+          <tr><td>是什麼</td><td>包在模型外的「作業系統」層</td><td>已內建 harness 的個人 agent（Nous Research）</td></tr>
+          <tr><td>所在層級</td><td>基礎設施層（OS）</td><td>應用層（App，跑在 harness 上）</td></tr>
+          <tr><td>你要做的</td><td>自己工程化／配置 harness</td><td>裝好後用「<span class="hl-t">講的</span>」操作（Telegram／CLI）</td></tr>
+          <tr><td>代表例子</td><td><span class="mono">Claude Code</span>、Agent SDK、Codex harness</td><td><span class="mono">Hermes Agent v0.14.0</span></td></tr>
+          <tr><td>適合</td><td>企業／生產級、要客製可控</td><td>個人知識工作、開箱即用</td></tr>
+        </tbody>
+      </table>
+      <div class="card" style="margin-top:18px;border-color:rgba(52,214,190,.35)">
+        <div class="t"><span class="hl-t">關鍵</span>：不是競爭對手，是「層」與「站在層上的成品」</div>
+        <div class="d">Hermes 本身就帶一套 harness。回頭看它的 <b style="color:var(--fg)">20 個坑</b>——模型路由、CRON、deliver=origin、對話導向——<span class="hl-t">其實全是「在 Windows 上配置一套 harness」的具體難題。</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 4 · 問題引入 -->
+  <section class="slide">
+    <div class="inner stagger">
+      <div class="kicker"><span class="dot"></span>問題引入</div>
+      <h2>裝一個 AI agent，<br>為什麼會踩到 <span class="hl">20 個坑</span>？</h2>
+      <p class="lead" style="margin-top:24px;max-width:820px">
+        因為真正的關卡，<span class="hl-t">幾乎都不是安裝指令本身</span>。
+      </p>
+      <p class="lead" style="margin-top:14px;max-width:820px;color:var(--fg-dim)">
+        而是兩件事：Windows 對這類工具的「<span class="hl">水土不服</span>」，<br>
+        以及一個必須轉過來的<span class="hl-t">心智模型</span>——
+        它不是網站，是一個會用工具的同事。
+      </p>
+      <p class="note">＊ 接下來把 20 個坑收斂成 3 個階段，逐階段帶你走。</p>
+    </div>
+  </section>
+
+  <!-- 3 · 全局地圖 -->
+  <section class="slide">
+    <div class="inner stagger">
+      <div class="kicker"><span class="dot"></span>全局地圖 · 三階段</div>
+      <h2>20 個坑，分成三層</h2>
+      <div class="grid g3">
+        <div class="card">
+          <div class="t"><span class="num">01–07</span>安裝層</div>
+          <div class="d">環境與平台差異。Windows 沒有 <code>sudo</code>／<code>systemd</code>，多數文件預設 Linux／macOS。</div>
+        </div>
+        <div class="card">
+          <div class="t"><span class="num">08–14</span>模型層</div>
+          <div class="d">多層設定的隱形成本。Main／Auxiliary／Profile／任務快照，<b style="color:var(--fg)">改一層不夠</b>。</div>
+        </div>
+        <div class="card" style="border-color:rgba(255,180,84,.4)">
+          <div class="t"><span class="num">15–20</span>工作流哲學 ⭐</div>
+          <div class="d">最高優先級。對話是主軸、Dashboard 是儀表板；<b style="color:var(--fg)">觸發點決定回報點</b>。</div>
+        </div>
+      </div>
+      <div class="takeaway">
+        <p class="lead">帶走一句話：把 Hermes 當<span class="hl-t">會用工具的同事</span>，用「<span class="hl-t">講的</span>」；<br>而不是當網站，用「<span class="hl-r">點的</span>」。</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 4 · 過渡：階段一 -->
+  <section class="slide divider">
+    <div class="inner stagger">
+      <div class="stage-no">STAGE 01 / 03</div>
+      <h1>安裝層</h1>
+      <p class="sub" style="margin-top:14px">把它裝起來——關卡在「Windows 不是 Linux」。</p>
+      <div class="stage-meta">
+        <span class="pill">踩坑 1–7</span>
+        <span class="pill">PATH · Python · cmd</span>
+        <span class="pill">sudo · gateway · UAC</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- 5 · 安裝 A -->
+  <section class="slide">
+    <div class="inner stagger">
+      <div class="kicker"><span class="dot"></span>安裝層 · 環境關卡（坑 1–3）</div>
+      <h2>別跟 <span class="hl-b">pip</span> 糾纏，<span class="hl-t">一行腳本</span>全包</h2>
+      <div class="rows">
+        <div class="row"><span class="pit">坑 1</span><div class="body"><b>pip 不在 PATH</b>：cmd 打 <code>pip install</code> 噴「不是內部或外部命令」。Anaconda 的 Scripts 沒進 cmd 的 PATH。</div></div>
+        <div class="row"><span class="pit">坑 2</span><div class="body"><b>Python 3.9 太舊</b>：Hermes 需要 <span class="hl-b">3.11+</span>，純 pip 裝會失敗。</div></div>
+        <div class="row"><span class="pit">坑 3</span><div class="body"><b>cmd 不認 <code>&&</code></b>：那是 PowerShell 7／bash 語法。<span class="fix">→ 改用 PowerShell。</span></div></div>
+      </div>
+      <div class="cmd">
+        <div class="bar"><i></i><i></i><i></i><span>PowerShell（不要用 cmd）</span></div>
+<pre><span class="comment"># 一行搞定：自動裝齊 Python 3.11 + Node.js + ripgrep + ffmpeg + uv</span>
+<span class="comment"># 不會動到你既有的 Anaconda 環境</span>
+<span class="prompt">PS&gt;</span> irm https://raw.githubusercontent.com/NousResearch/hermes-agent/main/scripts/install.ps1 | iex</pre>
+      </div>
+      <p class="note">＊ 裝完<b>重開一個 PowerShell</b>，PATH 變更才會生效。</p>
+    </div>
+  </section>
+
+  <!-- 6 · 安裝 B -->
+  <section class="slide">
+    <div class="inner stagger">
+      <div class="kicker"><span class="dot"></span>安裝層 · setup 精靈四陷阱（坑 4–7）</div>
+      <h2>精靈問你的問題，<span class="hl-t">照表回答</span>就好</h2>
+      <table>
+        <thead><tr><th>坑</th><th>現象</th><th>正解</th></tr></thead>
+        <tbody>
+          <tr><td><b class="num">4</b></td><td>問 <span class="mono">Enable sudo support?</span></td><td>一律答 <b class="hl-t">N</b>（Windows 沒有 sudo）</td></tr>
+          <tr><td><b class="num">5</b></td><td><span class="mono">gateway start</span> 卡死轉圈</td><td>改用 <span class="mono">hermes gateway run</span>（前景，<b class="hl">視窗不能關</b>）</td></tr>
+          <tr><td><b class="num">6</b></td><td>UAC scheduled task 迴圈</td><td>所有自啟動／排程問題一律 <b class="hl-t">N</b></td></tr>
+          <tr><td><b class="num">7</b></td><td><span class="mono">hermes ui</span> → invalid choice</td><td>正確指令是 <span class="mono">hermes dashboard</span></td></tr>
+        </tbody>
+      </table>
+      <p class="lead" style="margin-top:22px">心法：<span class="hl">看到 sudo / systemd / scheduled task —— 那是 Linux 的世界，跳過它。</span></p>
+    </div>
+  </section>
+
+  <!-- 7 · 過渡：階段二 -->
+  <section class="slide divider">
+    <div class="inner stagger">
+      <div class="stage-no">STAGE 02 / 03</div>
+      <h1>模型層</h1>
+      <p class="sub" style="margin-top:14px">換成免費模型——關卡在「設定不只一層」。</p>
+      <div class="stage-meta">
+        <span class="pill">踩坑 8–14</span>
+        <span class="pill">Main · Auxiliary · Profile</span>
+        <span class="pill">CRON · Kanban · BotFather</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- 8 · 模型 A（關鍵） -->
+  <section class="slide">
+    <div class="inner stagger">
+      <div class="kicker"><span class="dot"></span>模型層 · 關鍵 ★（坑 10–13）</div>
+      <h2>四層模型設定，<span class="hl">改一層不夠</span></h2>
+      <p class="sub">預設用付費的 Claude Opus 4.6 → 餘額不足噴 404。改 Gemini 要層層落實：</p>
+      <div class="grid g2">
+        <div class="card"><div class="t"><span class="num">10</span>Main Model</div><div class="d">對話主模型。改成免費的 <code>google/gemini-3-flash-preview</code>。</div></div>
+        <div class="card" style="border-color:rgba(255,180,84,.4)"><div class="t"><span class="num">11</span>Auxiliary Tasks ★</div><div class="d"><b style="color:var(--fg)">11 項輔助任務各自獨立</b>，預設全 = Claude。逐項 override 成 Gemini，狀態列要顯示 <code>11 overrides · 0 auto</code>。</div></div>
+        <div class="card"><div class="t"><span class="num">12</span>Profile 欄位</div><div class="d">名稱與模型是<b style="color:var(--fg)">分開兩欄</b>。<code>google/...</code> 含 <code>/</code> 填到名稱欄會被 reject。</div></div>
+        <div class="card"><div class="t"><span class="num">13</span>CRON 快照</div><div class="d">舊任務把模型<b style="color:var(--fg)">寫死在建立當下</b>。改設定後要<b class="hl-t">砍掉重建</b>才會吃新值。</div></div>
+      </div>
+      <p class="note">🚨 千萬別按 <span class="mono" style="color:var(--red)">RESET ALL TO AUTO</span>，會打回原狀、前功盡棄。</p>
+    </div>
+  </section>
+
+  <!-- 9 · 模型 B -->
+  <section class="slide">
+    <div class="inner stagger">
+      <div class="kicker"><span class="dot"></span>模型層 · 三個觀念修正（坑 8 · 9 · 14）</div>
+      <h2>三個「以為是這樣，其實不是」</h2>
+      <div class="rows">
+        <div class="row"><span class="pit">坑 8</span><div class="body"><b>Kanban ≠ 分類看板</b>。它是 <span class="hl-t">AI 任務佇列</span>（待分類→待辦→已排程→完成），每張卡是一個任務。<br>定時抓資訊 → 用 <b class="hl-b">CRON</b>；丟具體任務 → 用 Kanban。</div></div>
+        <div class="row"><span class="pit">坑 9</span><div class="body"><b>CRON 不能寫 <code>0900</code></b>。要 5 個欄位用空白隔開（分 時 日 月 週）。每天 9:00 = <code>0 9 * * *</code>。<span class="fix">不熟就上 crontab.guru。</span></div></div>
+        <div class="row"><span class="pit">坑 14</span><div class="body"><b>@BotFather 不是你的 bot</b>。它只是「註冊工具」。要去<span class="hl-t">你自己建的那個 bot</span> 的對話框按 START，才會收到 Hermes 回應。</div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 10 · 過渡：階段三 -->
+  <section class="slide divider">
+    <div class="inner stagger">
+      <div class="stage-no">STAGE 03 / 03 · ⭐ 最高優先級</div>
+      <h1>工作流哲學</h1>
+      <p class="sub" style="margin-top:14px">前面都是技術坑。這一段是<span class="hl-t">心智模型坑</span>——最容易讓人以為「系統壞了」。</p>
+      <div class="stage-meta">
+        <span class="pill">踩坑 15–20</span>
+        <span class="pill">觸發點 = 回報點</span>
+        <span class="pill">對話 &gt; Dashboard</span>
+        <span class="pill">指定 API ≠ 叫它搜尋</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- 11 · 哲學 A（最關鍵） -->
+  <section class="slide">
+    <div class="inner stagger">
+      <div class="kicker"><span class="dot"></span>工作流哲學 · 最關鍵 ★★（坑 15 · 17）</div>
+      <h2>觸發點，決定回報點</h2>
+      <p class="sub">CRON 跑成功、Dashboard 綠燈，但 Telegram 收不到（<code>Chat not found</code>）。差別只在你從哪裡觸發。</p>
+      <div class="vs">
+        <div class="col bad">
+          <h3>✕ 反模式</h3>
+          <ul>
+            <li>建 CRON 用預設 <code>deliver: telegram</code></li>
+            <li>早上自動跑 → 結果消失在 Home Channel</li>
+            <li>Dashboard 按 ▶︎ Run now → 一樣消失</li>
+            <li>以為系統壞了</li>
+          </ul>
+        </div>
+        <div class="col good">
+          <h3>✓ 正確</h3>
+          <ul>
+            <li>建 CRON 時 <code>deliver: origin</code></li>
+            <li>不管從哪觸發，都回到觸發點</li>
+            <li>想立刻重跑 → 在 Telegram 對 bot 說「跑一下」</li>
+            <li>結果秒回到你眼前</li>
+          </ul>
+        </div>
+      </div>
+      <p class="note">＊ 對話觸發 = 執行 + 回報路徑自動設成當前對話，一氣呵成，最不會出錯。</p>
+    </div>
+  </section>
+
+  <!-- 12 · 哲學 B -->
+  <section class="slide">
+    <div class="inner stagger">
+      <div class="kicker"><span class="dot"></span>工作流哲學 · 心智模型（坑 18 · 19）</div>
+      <h2>對話是主軸，<span class="hl-t">Dashboard 是儀表板</span></h2>
+      <div class="grid g2">
+        <div class="card">
+          <div class="t" style="color:var(--teal)">用「對話」做日常</div>
+          <div class="d">
+            新增 CRON →「幫我設一個每天 9 點…」<br>
+            改設定 → 「把時間改成晚上 10 點」<br>
+            看狀態 → 「我的 CRON 有哪些？」<br>
+            砍任務 → 「砍掉 daily-ai-news」<br>
+            <span class="hl-t">Agent 自己呼叫工具，比手動點還快還準。</span>
+          </div>
+        </div>
+        <div class="card">
+          <div class="t">Dashboard 只用在</div>
+          <div class="d">
+            第一次裝完的基礎配置<br>
+            視覺化看任務清單與執行歷史<br>
+            偵錯時看詳細 log<br>
+            <b style="color:var(--fg)">不適合日常操作、觸發、改參數。</b>
+          </div>
+        </div>
+      </div>
+      <p class="lead" style="margin-top:22px">經驗法則：<span class="hl">Dashboard 點按鈕點到第三次還沒成功 —— 停下來，打開 Telegram，用講的。</span></p>
+      <p class="note">＊ 坑 19：Dashboard 的「傳送至」下拉根本沒有 <code>origin</code> 選項，只能用對話建。Agent 用工具的能力 ⊃ Dashboard UI。</p>
+    </div>
+  </section>
+
+  <!-- 13 · 哲學 C -->
+  <section class="slide">
+    <div class="inner stagger">
+      <div class="kicker"><span class="dot"></span>工作流哲學 · 資料可信度（坑 16 · 20）</div>
+      <h2>指定 <span class="hl-b">API</span>，別叫它「<span class="hl-r">搜尋網路</span>」</h2>
+      <div class="vs">
+        <div class="col bad">
+          <h3>✕ 會編造</h3>
+          <ul>
+            <li>「請搜尋網路上有沒有 X 的最新消息」</li>
+            <li>Gemini Flash 沒 browser web search</li>
+            <li>會用未來式語氣瞎掰、捏造 URL</li>
+          </ul>
+        </div>
+        <div class="col good">
+          <h3>✓ 真實可信</h3>
+          <ul>
+            <li>「請呼叫 X API，參數 Y，整理結果給我」</li>
+            <li>Hermes 能直接 curl／Python 打 API</li>
+            <li>PubMed、arXiv 直連驗證 100% 為真</li>
+          </ul>
+        </div>
+      </div>
+      <p class="lead" style="margin-top:20px">坑 20 起手式：先讓 Agent <span class="hl-t">自我盤點</span>——「逐項<b style="color:var(--fg)">真的試一次</b>工具，不能說『理論上可以』」。<span class="hl">5 分鐘抵 2 小時的猜測。</span></p>
+    </div>
+  </section>
+
+  <!-- 14 · 迷思澄清 -->
+  <section class="slide">
+    <div class="inner stagger">
+      <div class="kicker"><span class="dot"></span>迷思澄清 · 把三個直覺翻過來</div>
+      <h2>三個最容易踩的直覺</h2>
+      <div class="grid g3">
+        <div class="card" style="border-color:rgba(251,113,133,.3)">
+          <div class="t"><span class="hl-r">✕</span> 裝 agent＝<code>pip install</code></div>
+          <div class="d"><span class="hl-g">✓</span> Windows 上走官方 <b style="color:var(--fg)">PowerShell 腳本</b>，一行把環境全裝齊。</div>
+        </div>
+        <div class="card" style="border-color:rgba(251,113,133,.3)">
+          <div class="t"><span class="hl-r">✕</span> 改 Main Model 就改完了</div>
+          <div class="d"><span class="hl-g">✓</span> 還有 <b style="color:var(--fg)">11 項 Auxiliary ＋ Profile ＋ CRON 快照</b>，四層都要落實。</div>
+        </div>
+        <div class="card" style="border-color:rgba(251,113,133,.3)">
+          <div class="t"><span class="hl-r">✕</span> 它是 SaaS，用 Dashboard 操作</div>
+          <div class="d"><span class="hl-g">✓</span> 它是<b style="color:var(--fg)">會用工具的 Agent</b>，用講的最有效。</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 15 · 最終可用配置 -->
+  <section class="slide">
+    <div class="inner stagger">
+      <div class="kicker"><span class="dot"></span>成果 · 最終可用配置（2026-05-26）</div>
+      <h2>跑得起來的長這樣</h2>
+      <div class="grid g2">
+        <div class="card">
+          <div class="t">模型</div>
+          <div class="d">
+            Main：<code>google/gemini-3-flash-preview</code><br>
+            Auxiliary：11 項全 override 為 Gemini<br>
+            Profile：<code>default</code> 設 Gemini
+          </div>
+        </div>
+        <div class="card">
+          <div class="t">Telegram</div>
+          <div class="d">
+            Bot：<code>KT Chu bot</code><br>
+            Allowed user：個人 user ID<br>
+            回報路徑：優先 <code>origin</code>（非 Home Channel）
+          </div>
+        </div>
+      </div>
+      <div class="card" style="margin-top:16px;border-color:rgba(91,224,138,.35)">
+        <div class="t"><span class="hl-g">✓</span> <code>morning-research-brief</code> · 每天 8:00 · deliver=origin</div>
+        <div class="d">三區塊整合：<b style="color:var(--fg)">認知神經科學</b>（Alzheimer＋糖尿病失智）＋<b style="color:var(--fg)">腎臟學</b>（NEJM／AJKD／KI）走 PubMed，<b style="color:var(--fg)">AI 進展</b>走 arXiv API。首次驗證：6 篇 PMID＋2 篇 arXiv 全部真實。整套工作流 100% 可信。</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 16 · 指令速查 -->
+  <section class="slide">
+    <div class="inner stagger">
+      <div class="kicker"><span class="dot"></span>速查 · 常用指令</div>
+      <h2>留著重灌時用的 cheatsheet</h2>
+      <table>
+        <thead><tr><th>想做的事</th><th>指令</th></tr></thead>
+        <tbody>
+          <tr><td>啟動 gateway（前景，視窗別關）</td><td><span class="mono">hermes gateway run</span></td></tr>
+          <tr><td>開看板 / Web UI</td><td><span class="mono">hermes dashboard</span></td></tr>
+          <tr><td>直接終端對話</td><td><span class="mono">hermes chat</span></td></tr>
+          <tr><td>看狀態</td><td><span class="mono">hermes gateway status</span></td></tr>
+          <tr><td>看可用模型</td><td><span class="mono">hermes model</span></td></tr>
+          <tr><td>健康檢查</td><td><span class="mono">hermes doctor</span></td></tr>
+          <tr><td>任一子命令的說明</td><td><span class="mono">hermes &lt;子命令&gt; --help</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- 17 · 關鍵教訓 -->
+  <section class="slide">
+    <div class="inner stagger">
+      <div class="kicker"><span class="dot"></span>提煉 · 六個關鍵教訓</div>
+      <h2>如果只記住六件事</h2>
+      <ul class="clean">
+        <li data-n="01"><b>Windows 水土不服</b>：文件多預設 Linux／macOS，自己翻譯 <code>start→run</code>、<code>ui→dashboard</code>、跳過 sudo／systemd。</li>
+        <li data-n="02"><b>多層模型的隱形成本</b>：Main／Auxiliary／Profile／任務快照，改一層不夠。</li>
+        <li data-n="03"><b>對話導向 vs 視覺導向</b>：Hermes 是前者，SaaS 思維會撞牆。</li>
+        <li data-n="04"><b>「沒 web search」≠「不能上網」</b>：指定 API endpoint 給它（真實），別叫它「搜尋」（編造）。</li>
+        <li data-n="05"><b>Agent 自己修錯的威力</b>：一句「幫我修正傳送頻道」，它自己診斷、跑工具鏈、改設定——這就是 agentic AI 的價值。</li>
+        <li data-n="06"><b>PubMed E-utilities 是金礦</b>：免費、無 key、官方、能抓完整 abstract，醫療研究自動化的 daily driver。</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- 18 · 總結 / 行動 -->
+  <section class="slide">
+    <div class="inner stagger">
+      <div class="kicker"><span class="dot"></span>收尾 · 帶走一句話</div>
+      <div style="display:flex;align-items:baseline;gap:18px;flex-wrap:wrap">
+        <div class="bignum">20<span style="font-size:.38em;color:var(--fg-faint)">/20</span></div>
+        <div style="flex:1;min-width:260px">
+          <p class="lead" style="margin-bottom:10px">坑都填平了。真正的收穫是那句心法：</p>
+          <div class="takeaway">
+            <p class="lead">把它當<span class="hl-t">會用工具的同事</span>，用「<span class="hl-t">講的</span>」；<br>不是當網站，用「<span class="hl-r">點的</span>」。</p>
+          </div>
+        </div>
+      </div>
+      <div class="grid g3" style="margin-top:28px">
+        <div class="card"><div class="t" style="font-size:16px">下一步 · Phase 1.5</div><div class="d">接 Gmail＋Calendar（裝 gws、完成 OAuth）。</div></div>
+        <div class="card"><div class="t" style="font-size:16px">Phase 2 · 多代理</div><div class="d">coder／researcher／reviewer 對應文獻／假設／審稿角色。</div></div>
+        <div class="card"><div class="t" style="font-size:16px">整合 Obsidian</div><div class="d">讓 Hermes 把每日 brief 直接寫進 vault。</div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 21 · 附錄：免費模型備援清單 -->
+  <section class="slide">
+    <div class="inner stagger">
+      <div class="kicker"><span class="dot"></span>附錄 · 被擋了怎麼辦（OpenRouter 免費模型）</div>
+      <h2>免費模型<span class="hl-t">備援清單</span>＋切換步驟</h2>
+      <div class="grid g2" style="margin-top:18px;align-items:start">
+        <div>
+          <table class="fb">
+            <thead><tr><th>模型 ID（填這個）</th><th>脈絡</th><th>適用</th></tr></thead>
+            <tbody>
+              <tr><td>openrouter/owl-alpha</td><td>1.05M</td><td><span class="tag">agent 首選</span></td></tr>
+              <tr><td>deepseek/deepseek-v4-flash:free</td><td>1.05M</td><td>長脈絡 · agent</td></tr>
+              <tr><td>nvidia/nemotron-3-super-120b-a12b:free</td><td>1M</td><td>多代理</td></tr>
+              <tr><td>minimax/minimax-m2.5:free</td><td>205K</td><td>會做 Office 檔</td></tr>
+              <tr><td>openai/gpt-oss-120b:free</td><td>131K</td><td>function calling</td></tr>
+              <tr><td>google/gemma-4-31b-it:free</td><td>262K</td><td>遷移最無痛</td></tr>
+              <tr><td>openrouter/free</td><td>—</td><td><span class="tag">自動挑 · 保底</span></td></tr>
+            </tbody>
+          </table>
+          <p class="note" style="margin-top:10px">＊ 規則勝過清單：到 openrouter.ai/models 搜 <span class="chip">:free</span>，挑一個支援 tool calling 的即可。清單變動很快。</p>
+        </div>
+        <div class="card">
+          <div class="t" style="font-size:17px"><span class="hl-t">切換步驟</span>（用對話最省事）</div>
+          <ul class="steps">
+            <li data-n="1.">在 Telegram 對 bot 說：「把 <b>Main Model</b> 改成 <span class="chip">openrouter/owl-alpha</span>」</li>
+            <li data-n="2.">同步改 <b>11 項 Auxiliary Tasks</b>（老坑！否則偷叫付費模型）</li>
+            <li data-n="3."><b>CRON 任務砍掉重建</b>——模型寫死在建立當下，改設定不會回溯</li>
+            <li data-n="4.">想省事就用 <span class="chip">openrouter/free</span>，某個模型掛了會自動換</li>
+          </ul>
+          <div class="warnbar">
+            <b>兩個限制</b>　① 免費約 20 次/分、200 次/天，超過噴 429——daily brief 一天一次沒問題，但別讓多個 Auxiliary 同時狂打。<br>
+            ② 免費 preview 模型<b>會記錄 prompt 拿去訓練</b>：抓 PubMed／arXiv 公開文獻 OK，碰病人資料或未發表內容請改付費、不記錄的模型。
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 22 · 附錄：最終架構（Apps Script 版每日 brief） -->
+  <section class="slide">
+    <div class="inner stagger">
+      <div class="kicker"><span class="dot"></span>附錄 · 演進終點：自己重做一個更穩的版本</div>
+      <h2>每日 Brief 最終架構<span class="hl-t">（Google Apps Script）</span></h2>
+      <div class="archwrap">
+        <svg viewBox="0 0 1120 200" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;display:block" font-family="'Noto Sans TC',sans-serif">
+          <defs>
+            <marker id="ah" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto">
+              <path d="M0,0 L7,3 L0,6 Z" fill="#5E6975"/>
+            </marker>
+          </defs>
+
+          <!-- 1. 雲端鬧鐘 -->
+          <rect x="6" y="74" width="150" height="54" rx="11" fill="#241E14" stroke="#7A5A2E" stroke-width="1.6"/>
+          <text x="81" y="98" text-anchor="middle" fill="#E7ECF2" font-size="16" font-weight="700">⏰ Trigger</text>
+          <text x="81" y="116" text-anchor="middle" fill="#9AA6B2" font-size="11.5" font-family="'JetBrains Mono',monospace">每天台灣 08:00</text>
+
+          <path d="M158 101 L196 101" stroke="#5E6975" stroke-width="1.6" fill="none" marker-end="url(#ah)"/>
+
+          <!-- 2. 三個來源 -->
+          <rect x="198" y="14" width="210" height="44" rx="11" fill="#151A21" stroke="#2A333E" stroke-width="1.5"/>
+          <text x="214" y="41" fill="#9AA6B2" font-size="12.5" font-weight="500">PubMed · 腎臟學 + 神經</text>
+          <rect x="198" y="79" width="210" height="44" rx="11" fill="#151A21" stroke="#2A333E" stroke-width="1.5"/>
+          <text x="214" y="106" fill="#9AA6B2" font-size="12.5" font-weight="500">arXiv · AI 論文</text>
+          <rect x="198" y="144" width="210" height="44" rx="11" fill="#151A21" stroke="#2A333E" stroke-width="1.5"/>
+          <text x="214" y="171" fill="#9AA6B2" font-size="12.5" font-weight="500">AI 新聞 RSS ×5（OpenAI…）</text>
+
+          <!-- arrows into function -->
+          <path d="M410 36 C445 36 445 92 478 92" stroke="#5E6975" stroke-width="1.6" fill="none" marker-end="url(#ah)"/>
+          <path d="M410 101 L478 101" stroke="#5E6975" stroke-width="1.6" fill="none" marker-end="url(#ah)"/>
+          <path d="M410 166 C445 166 445 110 478 110" stroke="#5E6975" stroke-width="1.6" fill="none" marker-end="url(#ah)"/>
+
+          <!-- 3. Apps Script -->
+          <rect x="480" y="68" width="170" height="66" rx="11" fill="#131D18" stroke="#34D6BE" stroke-width="1.6"/>
+          <text x="565" y="95" text-anchor="middle" fill="#E7ECF2" font-size="16" font-weight="700">Apps Script</text>
+          <text x="565" y="114" text-anchor="middle" fill="#34D6BE" font-size="11.5" font-family="'JetBrains Mono',monospace">dailyBrief()</text>
+
+          <path d="M652 101 L690 101" stroke="#5E6975" stroke-width="1.6" fill="none" marker-end="url(#ah)"/>
+
+          <!-- 4. GPT -->
+          <rect x="692" y="74" width="158" height="54" rx="11" fill="#151A21" stroke="#2A333E" stroke-width="1.5"/>
+          <text x="771" y="98" text-anchor="middle" fill="#E7ECF2" font-size="16" font-weight="700">GPT-5.5</text>
+          <text x="771" y="116" text-anchor="middle" fill="#9AA6B2" font-size="11.5" font-family="'JetBrains Mono',monospace">整理成四區塊</text>
+
+          <path d="M852 101 L890 101" stroke="#5E6975" stroke-width="1.6" fill="none" marker-end="url(#ah)"/>
+
+          <!-- 5. Telegram -->
+          <rect x="892" y="74" width="158" height="54" rx="11" fill="#131D18" stroke="#34D6BE" stroke-width="1.6"/>
+          <text x="971" y="98" text-anchor="middle" fill="#E7ECF2" font-size="16" font-weight="700">📲 Telegram</text>
+          <text x="971" y="116" text-anchor="middle" fill="#9AA6B2" font-size="11.5" font-family="'JetBrains Mono',monospace">推到你手機</text>
+        </svg>
+      </div>
+      <div class="evo">
+        <div class="col was">
+          <h3>✕ Hermes（起點）</h3>
+          <div class="r"><b>跑在哪</b><span class="v">你的 Windows PC</span></div>
+          <div class="r"><b>可靠度</b><span class="v">電腦要開著</span></div>
+          <div class="r"><b>模型</b><span class="v">免費版效果差</span></div>
+          <div class="r"><b>裝設</b><span class="v">20 個坑</span></div>
+        </div>
+        <div class="col now">
+          <h3>✓ Apps Script（終點）</h3>
+          <div class="r"><b>跑在哪</b><span class="v">Google 雲端</span></div>
+          <div class="r"><b>可靠度</b><span class="v">24h 不靠開機</span></div>
+          <div class="r"><b>模型</b><span class="v">付費 GPT-5.5</span></div>
+          <div class="r"><b>裝設</b><span class="v">瀏覽器點一點 · 免綁卡</span></div>
+        </div>
+      </div>
+      <p class="note">＊ 同樣的「抓 → 整理 → 推」流程，換個更穩的外殼：雲端排程、第一手來源、免費平台。Hermes 教會的觀念（觸發點＝回報點、指定 API 不要叫它搜尋），這版全用上了。</p>
+    </div>
+  </section>
+
+  <!-- 23 · 附錄：最後部署與避坑實戰（Google Apps Script 觸發器與 Rate Limit） -->
+  <section class="slide">
+    <div class="inner stagger">
+      <div class="kicker"><span class="dot"></span>附錄 · 最後部署與避坑實戰</div>
+      <h2>Apps Script <span class="hl-t">排程與 API Key 完美設定</span></h2>
+      <p class="sub">解決最後一步的 PubMed 頻率限制 (Rate Limit Access)，以及一鍵自動定時早上 7 點排程。</p>
+      <div class="grid g2" style="margin-top:18px">
+        <div class="card">
+          <div class="t" style="color:var(--teal)"><span class="num">01</span> 解決 PubMed 頻率限制 (NCBI Key)</div>
+          <div class="d">
+            無 Key 限制為每秒 3 次。有 Key 提升至 10 次。<br>
+            <b class="hl">快捷解決方案：</b>已在 <code>daily-brief.gs</code> 底部新增 <code>setNcbiApiKeyHelper()</code> 函式。<br>
+            直接在代碼填入您的 Key 執行一次，金鑰即會儲存在雲端，安全且不需要留存程式碼中。
+          </div>
+        </div>
+        <div class="card">
+          <div class="t" style="color:var(--amber)"><span class="num">02</span> 早上 7:00 排程一鍵自動設定</div>
+          <div class="d">
+            傳統手動點網頁觸發器費時又易錯。<br>
+            <b class="hl-t">快捷解決方案：</b>直接執行 <code>setupDailyTrigger()</code> 函式，程式會自動清除重複舊觸發器，並在 Google 雲端建立每天早上 7:00 ~ 8:00 間運行的定時排程。
+          </div>
+        </div>
+      </div>
+      <div class="card" style="margin-top:16px;border-color:rgba(52,214,190,.35)">
+        <div class="t"><span class="hl-t">部署完畢後 Telegram 會收到</span>：⏰ 觸發器設定成功！每天早上 7 點將自動執行 dailyBrief。</div>
+        <div class="d">完整步驟與時區確認均已寫入 <span class="mono">每日Brief自建部署與排程手冊.md</span>，這才是 2026 年最頂級、免開機、零成本的個人文獻 Brief 完美形態！</div>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<!-- chrome -->
+<div class="chrome"><div class="fill" id="fill"></div></div>
+<div class="hud">
+  <span>← → 翻頁 · F 全螢幕</span>
+  <span class="count"><b id="cur">1</b> / <span id="tot">22</span></span>
+  <span class="nav"><button id="prev">‹</button><button id="next">›</button></span>
+</div>
+
+<script>
+  const slides=[...document.querySelectorAll('.slide')];
+  const tot=slides.length;
+  let i=0;
+  document.getElementById('tot').textContent=tot;
+  const fill=document.getElementById('fill');
+  const cur=document.getElementById('cur');
+
+  function reflow(el){ el.querySelectorAll('.stagger>*').forEach(c=>{c.style.animation='none';void c.offsetWidth;c.style.animation='';}); }
+  function go(n){
+    n=Math.max(0,Math.min(tot-1,n));
+    if(n===i && slides[i].classList.contains('active')) return;
+    slides[i].classList.remove('active');
+    i=n;
+    slides[i].classList.add('active');
+    reflow(slides[i]);
+    fill.style.width=((i+1)/tot*100)+'%';
+    cur.textContent=i+1;
+  }
+  go(0);
+
+  document.getElementById('next').onclick=()=>go(i+1);
+  document.getElementById('prev').onclick=()=>go(i-1);
+  document.addEventListener('keydown',e=>{
+    if(e.key==='ArrowRight'||e.key==='PageDown'||e.key===' '){e.preventDefault();go(i+1);}
+    else if(e.key==='ArrowLeft'||e.key==='PageUp'){e.preventDefault();go(i-1);}
+    else if(e.key==='Home'){go(0);}
+    else if(e.key==='End'){go(tot-1);}
+    else if(e.key==='f'||e.key==='F'){ if(!document.fullscreenElement)document.documentElement.requestFullscreen(); else document.exitFullscreen(); }
+  });
+  // touch swipe
+  let sx=0,sy=0;
+  document.addEventListener('touchstart',e=>{sx=e.touches[0].clientX;sy=e.touches[0].clientY;},{passive:true});
+  document.addEventListener('touchend',e=>{
+    const dx=e.changedTouches[0].clientX-sx, dy=e.changedTouches[0].clientY-sy;
+    if(Math.abs(dx)>50 && Math.abs(dx)>Math.abs(dy)){ go(dx<0?i+1:i-1); }
+  },{passive:true});
+  // click right/left half
+  document.getElementById('deck').addEventListener('click',e=>{
+    if(e.target.closest('a,button')) return;
+    go(e.clientX > window.innerWidth/2 ? i+1 : i-1);
+  });
+</script>
+</body>
+</html>
