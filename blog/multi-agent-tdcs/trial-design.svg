@@ -1,0 +1,97 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="900" viewBox="0 0 1200 900" role="img" aria-labelledby="title desc">
+  <title id="title">CONSORT-style clinical trial flow diagram</title>
+  <desc id="desc">Clinical trial flow from screening to randomization, three tDCS arms, completion, analysis, and endpoints.</desc>
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto" markerUnits="strokeWidth">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#111"/>
+    </marker>
+    <style>
+      .page { fill: #fff; }
+      .box { fill: #fff; stroke: #111; stroke-width: 1.6; rx: 10; ry: 10; }
+      .large { stroke-width: 1.8; }
+      .line { stroke: #111; stroke-width: 1.6; fill: none; marker-end: url(#arrow); }
+      .plain-line { stroke: #111; stroke-width: 1.6; fill: none; }
+      .text { font-family: Arial, Helvetica, sans-serif; fill: #111; font-size: 16px; }
+      .small { font-size: 13px; }
+      .label { font-size: 13px; fill: #222; }
+      .bold { font-weight: 700; }
+      .center { text-anchor: middle; dominant-baseline: middle; }
+      .left { text-anchor: start; }
+    </style>
+  </defs>
+
+  <rect class="page" x="0" y="0" width="1200" height="900"/>
+
+  <!-- Screening -->
+  <rect class="box large" x="480" y="45" width="240" height="58"/>
+  <text class="text bold center" x="600" y="74">Screened (N=200)</text>
+
+  <!-- Excluded side box -->
+  <path class="plain-line" d="M720 74 H815"/>
+  <rect class="box" x="815" y="32" width="285" height="116"/>
+  <text class="text bold left" x="835" y="58">Excluded (N=65)</text>
+  <text class="text small left" x="835" y="84">- Not meeting inclusion criteria</text>
+  <text class="text small left" x="835" y="106">- Declined participation</text>
+  <text class="text small left" x="835" y="128">- Other reasons</text>
+
+  <!-- Randomization -->
+  <path class="line" d="M600 103 V168"/>
+  <rect class="box large" x="460" y="168" width="280" height="64"/>
+  <text class="text bold center" x="600" y="200">Randomized (N=135)</text>
+
+  <!-- Splitter -->
+  <path class="plain-line" d="M600 232 V285"/>
+  <path class="plain-line" d="M210 285 H990"/>
+  <path class="line" d="M210 285 V326"/>
+  <path class="line" d="M600 285 V326"/>
+  <path class="line" d="M990 285 V326"/>
+
+  <!-- Arm A -->
+  <rect class="box" x="90" y="326" width="240" height="66"/>
+  <text class="text bold center" x="210" y="353">Closed-loop tDCS</text>
+  <text class="text center" x="210" y="376">(N=45)</text>
+  <path class="line" d="M210 392 V438"/>
+  <rect class="box" x="110" y="438" width="200" height="54"/>
+  <text class="text center" x="210" y="465">Completed: 38</text>
+  <path class="line" d="M210 492 V536"/>
+  <rect class="box" x="110" y="536" width="200" height="54"/>
+  <text class="text center" x="210" y="563">Analyzed: 38</text>
+
+  <!-- Arm B -->
+  <rect class="box" x="480" y="326" width="240" height="66"/>
+  <text class="text bold center" x="600" y="353">Open-loop tDCS</text>
+  <text class="text center" x="600" y="376">(N=45)</text>
+  <path class="line" d="M600 392 V438"/>
+  <rect class="box" x="500" y="438" width="200" height="54"/>
+  <text class="text center" x="600" y="465">Completed: 38</text>
+  <path class="line" d="M600 492 V536"/>
+  <rect class="box" x="500" y="536" width="200" height="54"/>
+  <text class="text center" x="600" y="563">Analyzed: 38</text>
+
+  <!-- Arm C -->
+  <rect class="box" x="870" y="326" width="240" height="66"/>
+  <text class="text bold center" x="990" y="353">Sham tDCS</text>
+  <text class="text center" x="990" y="376">(N=45)</text>
+  <path class="line" d="M990 392 V438"/>
+  <rect class="box" x="890" y="438" width="200" height="54"/>
+  <text class="text center" x="990" y="465">Completed: 38</text>
+  <path class="line" d="M990 492 V536"/>
+  <rect class="box" x="890" y="536" width="200" height="54"/>
+  <text class="text center" x="990" y="563">Analyzed: 38</text>
+
+  <!-- Endpoints -->
+  <path class="plain-line" d="M210 590 V640"/>
+  <path class="plain-line" d="M600 590 V640"/>
+  <path class="plain-line" d="M990 590 V640"/>
+  <path class="plain-line" d="M210 640 H990"/>
+  <path class="line" d="M600 640 V680"/>
+
+  <rect class="box large" x="350" y="680" width="500" height="62"/>
+  <text class="text bold center" x="600" y="711">Primary Endpoint: MoCA + ATR (composite)</text>
+
+  <path class="line" d="M600 742 V780"/>
+  <rect class="box" x="315" y="780" width="570" height="88"/>
+  <text class="text bold center" x="600" y="806">Secondary Endpoints</text>
+  <text class="text small center" x="600" y="832">Cognitive domain scores, EEG spectral measures, safety and tolerability</text>
+  <text class="text small center" x="600" y="854">Adverse events, adherence, stimulation response metrics</text>
+</svg>

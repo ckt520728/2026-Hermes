@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="從想法到論文，全程用 AI Agent 分工協作：計算神經科學家建模型、模擬專家跑參數、臨床研究員設計試驗、寫手整合成論文。記錄這個過程的方法、成果，以及踩過的每一個坑。">
+<meta property="og:title" content="當 AI 成為研究助手：用 Multi-Agent 架構完成一篇 closed-loop tDCS 論文">
+<meta property="og:description" content="從想法到論文，全程用 AI Agent 分工協作：計算神經科學家建模型、模擬專家跑參數、臨床研究員設計試驗、寫手整合成論文。記錄這個過程的方法、成果，以及踩過的每一個坑。">
+<meta property="og:image" content="multi-agent-tdcs/cover.png">
+<title>當 AI 成為研究助手：用 Multi-Agent 架構完成一篇 closed-loop tDCS 論文 | 朱國大醫師</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&family=Inter:wght@300;400;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<style>
+:root {
+  --bg:#0a0f1e; --card:#111d3c; --card2:#162248; --teal:#4dd9cf; --teal2:#7ee8e2;
+  --purple:#8b5cf6; --gold:#f4a261; --red:#fb7185; --text:#e8f4f8; --text2:#9bb6cc;
+  --dim:#607892; --border:rgba(77,217,207,.16); --shadow:0 12px 42px rgba(0,0,0,.42);
+}
+* { box-sizing:border-box; }
+body { margin:0; font-family:'Noto Sans TC','Inter',Arial,sans-serif; background:var(--bg); color:var(--text); line-height:1.9; }
+a { color:var(--teal); text-decoration:none; }
+a:hover { color:var(--teal2); }
+.top-bar { position:sticky; top:0; z-index:20; background:rgba(10,15,30,.92); backdrop-filter:blur(10px); border-bottom:1px solid var(--border); }
+.top-bar-inner { max-width:1080px; margin:0 auto; padding:13px 24px; display:flex; justify-content:space-between; gap:16px; align-items:center; }
+.back-link { color:var(--text2); font-size:.92rem; display:inline-flex; gap:8px; align-items:center; }
+.top-bar-title { color:var(--dim); font:500 .78rem 'JetBrains Mono',monospace; }
+.hero { max-width:1120px; margin:0 auto; padding:48px 24px 18px; }
+.hero-card { overflow:hidden; border:1px solid var(--border); border-radius:18px; background:var(--card); box-shadow:var(--shadow); }
+.hero-img { width:100%; display:block; aspect-ratio:16/9; object-fit:cover; }
+.article { max-width:900px; margin:0 auto; padding:34px 24px 84px; }
+.article-header { padding-bottom:30px; margin-bottom:34px; border-bottom:1px solid var(--border); }
+.article-meta { color:var(--teal); font:500 .85rem 'JetBrains Mono',monospace; margin-bottom:14px; }
+h1 { font-size:2.35rem; line-height:1.32; margin:0 0 18px; background:linear-gradient(135deg,#fff,var(--teal2)); -webkit-background-clip:text; background-clip:text; color:transparent; }
+.lead { color:var(--text2); font-size:1.08rem; margin:0; }
+.author-line { margin-top:20px; color:var(--text2); font-size:.92rem; display:flex; flex-wrap:wrap; gap:10px; }
+.tag-list { margin-top:18px; display:flex; flex-wrap:wrap; gap:8px; }
+.tag,.badge { display:inline-flex; align-items:center; border-radius:999px; padding:3px 11px; background:rgba(77,217,207,.09); color:var(--teal); font-size:.76rem; }
+h2 { margin:48px 0 18px; font-size:1.62rem; color:#fff; }
+h3 { margin:30px 0 12px; font-size:1.18rem; color:var(--teal2); }
+p { margin:0 0 18px; color:var(--text); }
+ul,ol { margin:0 0 22px 1.4rem; padding:0; }
+li { margin-bottom:8px; color:var(--text); }
+strong { color:#fff; }
+code { font-family:'JetBrains Mono',monospace; background:rgba(255,255,255,.08); padding:2px 6px; border-radius:6px; }
+table { width:100%; border-collapse:collapse; margin:24px 0 32px; background:rgba(17,29,60,.72); border:1px solid var(--border); border-radius:12px; overflow:hidden; display:table; }
+th,td { padding:12px 14px; border-bottom:1px solid rgba(255,255,255,.08); text-align:left; vertical-align:top; }
+th { color:var(--teal2); font-weight:700; background:rgba(77,217,207,.08); }
+tr:last-child td { border-bottom:0; }
+figure { margin:34px 0; border:1px solid var(--border); background:rgba(255,255,255,.96); border-radius:14px; overflow:hidden; box-shadow:0 10px 30px rgba(0,0,0,.25); }
+figure img { display:block; width:100%; height:auto; }
+figcaption { padding:13px 16px 15px; background:#fff; color:#314155; font-size:.9rem; line-height:1.65; border-top:1px solid #e5e7eb; }
+.callout { margin:26px 0; padding:18px 20px; border-radius:12px; border:1px solid var(--border); background:rgba(77,217,207,.08); color:var(--text); }
+.callout-warning { background:rgba(244,162,97,.11); border-color:rgba(244,162,97,.28); }
+.formula { margin:24px 0; padding:18px 20px; border:1px solid rgba(139,92,246,.28); border-radius:12px; background:rgba(139,92,246,.1); color:#f1efff; font-family:'JetBrains Mono',monospace; font-size:.94rem; overflow-x:auto; }
+.footer-note { margin-top:56px; padding-top:26px; border-top:1px solid var(--border); color:var(--dim); font-size:.86rem; }
+@media (max-width:720px) {
+  .hero { padding:28px 14px 10px; } .article { padding:24px 18px 64px; }
+  h1 { font-size:1.72rem; } h2 { font-size:1.35rem; }
+  .top-bar-title { display:none; } table { font-size:.86rem; } th,td { padding:9px 10px; }
+}
+</style>
+</head>
+<body>
+<nav class="top-bar">
+  <div class="top-bar-inner">
+    <a class="back-link" href="../index.html#teaching"><i class="fas fa-arrow-left"></i> 回到文章列表</a>
+    <div class="top-bar-title">Multi-Agent Research Pipeline · closed-loop tDCS</div>
+  </div>
+</nav>
+<section class="hero">
+  <div class="hero-card"><img class="hero-img" src="multi-agent-tdcs/cover.png" alt="Multi-Agent Research Pipeline 封面圖"></div>
+</section>
+<main class="article">
+  <header class="article-header">
+    <div class="article-meta"><span class="badge">認知神經科學筆記</span> <span>2026 / 06 / 05</span></div>
+    <h1>當 AI 成為研究助手：用 Multi-Agent 架構完成一篇 closed-loop tDCS 論文</h1>
+    <p class="lead">從想法到論文，全程用 AI Agent 分工協作：計算神經科學家建模型、模擬專家跑參數、臨床研究員設計試驗、寫手整合成論文。記錄這個過程的方法、成果，以及踩過的每一個坑。</p>
+    <div class="author-line"><span>朱國大</span><span>·</span><span>腎臟科暨認知神經科學研究</span><span>·</span><span>依據 Multi-Agent 協作研究計畫各 Agent 產出整理</span></div>
+    <div class="tag-list"><span class="tag">AI Agent</span><span class="tag">Multi-Agent</span><span class="tag">Closed-loop tDCS</span><span class="tag">Computational Neuroscience</span><span class="tag">Game Theory</span></div>
+  </header>
+  <p>傳統的學術研究流程是線性的：文獻回顧 → 建立模型 → 跑模擬 → 寫論文。每一段都由同一個人（或同一個小團隊）依序完成。這個過程漫長、容易卡關，而且每個環節的品質高度取決於研究者當時的精力與專注力。</p>
+
+<p>這篇文章記錄了一個截然不同的做法：<strong>把研究專案拆成 6 個角色，分派給 6 個 AI Agent 分工協作</strong>——就像實驗室裡有博士後、工程師、統計學家、臨床研究助理和論文寫手，各司其職、接力產出。最終在 24 小時內，從兩篇核心論文出發，完成了一套完整的 closed-loop tDCS 治療阿茲海默症（AD）的計算神經科學框架，包含可執行的 Python 模擬程式、Phase IIa 臨床試驗方案、統計分析計畫，以及論文初稿與 Grant Proposal。</p>
+
+<h2>起點：兩篇關於 closed-loop 的論文</h2>
+
+<p>一切的起點是這樣一個想法：我想把 closed-loop brain stimulation 的方法應用在臨床個案上做 validation。但我意識到，要真正理解這個方法，必須從 <strong>計算神經科學的基礎</strong>開始——先建模型，再做 simulation 驗證假說，然後在實際個案資料上驗證，最後才能前瞻性執行臨床試驗。</p>
+
+<p>我挑選了兩篇核心論文作為起點：</p>
+
+<ul>
+  <li><strong>Hart-Pomerantz (2026)</strong>：比較 open-loop 與 EEG-guided closed-loop tDCS 在 MATB 多工任務上的表現。這是實驗導向的研究，直接驗證 closed-loop 的臨床可行性。</li>
+  <li><strong>Madduri et al. (2026, Nature Machine Intelligence)</strong>：提出了一個結合 control theory 與 game theory 的計算框架，用於建模與優化 co-adaptive 神經介面中的人機互動。這是理論導向的研究，提供數學工具來預測與優化刺激參數。</li>
+</ul>
+
+<p>這兩篇論文恰好互補：一篇告訴我「closed-loop tDCS 在臨床上怎麼做」，另一篇告訴我「怎麼用數學模型來優化它」。但要把這兩篇的方法整合成一個完整的研究計畫，中間有大量的空白需要填補——這就是 Multi-Agent 架構派上用場的地方。</p>
+
+
+<figure>
+  <img src="multi-agent-tdcs/architecture.png" alt="Multi-Agent 研究管線架構圖">
+  <figcaption>Multi-Agent 研究管線：由基礎模型、模擬、回顧分析、前瞻性試驗到論文與 grant 的端到端流程。</figcaption>
+</figure>
+
+<h2>架構設計：6 個 Agent，4 個 Stage</h2>
+
+<p>我把整個研究流程拆成 4 個 Stage，每個 Stage 由專門的 Agent 負責：</p>
+
+<table>
+  <thead>
+    <tr><th>Stage</th><th>Agent</th><th>角色</th><th>核心產出</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>1. 基礎</td><td>Agent 1</td><td>計算神經科學家</td><td>NMM 模型 + 參數化 + 假說</td></tr>
+    <tr><td>1. 基礎</td><td>Agent 6</td><td>文獻守門員</td><td>文獻回顧 + 方法學比較</td></tr>
+    <tr><td>2. 模擬</td><td>Agent 2</td><td>模擬與建模專家</td><td>參數掃描 + 預測 + 最佳參數</td></tr>
+    <tr><td>3. 回顧</td><td>Agent 3</td><td>資料分析師</td><td>分析管線 + Patient Stratification</td></tr>
+    <tr><td>4. 前瞻</td><td>Agent 4</td><td>臨床研究員</td><td>臨床試驗方案 + SAP + DSMB</td></tr>
+    <tr><td>整合</td><td>Agent 5</td><td>整合與發表</td><td>論文初稿 + Grant Proposal</td></tr>
+  </tbody>
+</table>
+
+<p>每個 Agent 都有明確的<strong>輸入</strong>（前序 Agent 的產出）和<strong>輸出</strong>（供後序 Agent 使用的檔案）。整個管線的資料流是：</p>
+
+<div class="callout callout-info">
+  <strong>資料流：</strong>Agent 1（模型參數）→ Agent 2（模擬驗證）→ Agent 3（回顧分析）→ Agent 4（臨床試驗）→ Agent 5（論文 + Grant）<br>
+  Agent 6（文獻）貫穿所有 Stage，為每個 Agent 提供最新的方法學支援。
+</div>
+
+<h2>Stage 1：計算神經科學基礎</h2>
+
+<h3>Agent 1 做了什麼</h3>
+
+<p>Agent 1 的任務是建立一個能重現 AD/MCI 關鍵 EEG 生物標記的計算模型。經過文獻回顧與方法學比較，選擇了 <strong>Jansen-Rit Neural Mass Model (NMM)</strong> 作為核心框架，原因有三：</p>
+
+<ol>
+  <li><strong>計算效率高</strong>：ODE 系統可在毫秒級完成模擬，支援即時閉環控制</li>
+  <li><strong>EEG 對應性</strong>：直接輸出模擬 EEG 信號，可與實證數據直接比較</li>
+  <li><strong>參數可解釋性</strong>：每個參數對應明確的生理機制（突觸增益、連接強度等）</li>
+</ol>
+
+<p>模型包含三個節點：<strong>Frontal（前額葉）</strong>、<strong>Parietal（頂葉）</strong>、<strong>Thalamic（丘腦）</strong>，每個節點由 Jansen-Rit ODE 系統描述。AD 病理通過一個連續參數 <code>severity ∈ [0, 1]</code> 來參數化：</p>
+
+<div class="formula">
+  A(severity) = 3.25 − 1.05 × severity &nbsp;&nbsp;[興奮性增益，mV]<br>
+  B(severity) = 22 + 8 × severity &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[抑制性增益，mV]<br>
+  W<sub>fp</sub>(severity) = 50 × (1 − 0.5 × severity) &nbsp;[前額→頂葉連接]
+</div>
+
+<p>這個參數化的生理依據是：A 降低對應膽鹼能神經元退化，B 升高對應 GABA 能失調，連接權重降低對應白質退化。</p>
+
+
+<figure>
+  <img src="multi-agent-tdcs/nmm-model.png" alt="三節點 Neural Mass Model 示意圖">
+  <figcaption>三節點 Neural Mass Model：Frontal、Parietal、Thalamic 節點與 tDCS 刺激 target，用於連接計算模型與 EEG 生物標記。</figcaption>
+</figure>
+
+<h3>Agent 6 做了什麼</h3>
+
+<p>Agent 6 同時啟動，負責文獻回顧與方法學比較。搜尋並分析了 27 篇關鍵文獻，涵蓋 8 個主題群組：tDCS 計算模型、EEG 認知負荷檢測、closed-loop 刺激回顧、控制理論、Game Theory、myoelectric co-adaptation、NMM 驗證、tDCS 多工實證。</p>
+
+<p>最重要的產出是<strong>方法學選擇建議</strong>：推薦使用 RADWT（Rational Dilation Wavelet Transform）做時頻分析、wPLI 做功能連接、Kalman Filter 做狀態估計、MPC（Model Predictive Control）做閉環控制。這些建議直接指導了後續 Agent 的模擬與分析設計。</p>
+
+<h2>Stage 2：模擬與預測</h2>
+
+<p>Agent 2 接收 Agent 1 的模型參數與 Agent 6 的方法學建議，執行了完整的模擬驗證與參數優化。</p>
+
+<h3>關鍵發現</h3>
+
+<p><strong>1. ATR 隨 severity 單調遞減</strong>：Alpha/Theta Ratio（ATR）從健康狀態的 0.080 降至 AD 中晚期的 0.061，降幅 24%，與文獻報告的 AD 患者 ATR 下降 20-40% 高度一致。</p>
+
+<p><strong>2. Game-Theoretic Co-Adaptation 收斂</strong>：將 closed-loop tDCS 系統建模為 potential game（兩人博弈），所有測試條件均收斂到相同的 potential 值（Φ = 0.4375），驗證了理論預測。</p>
+
+<p><strong>3. Goldilocks 效應</strong>：初步證據支持存在最優刺激強度區間（1.0-1.5 mA），過低則無效，過高則可能對已受損的神經網絡產生干擾。</p>
+
+
+<figure>
+  <img src="multi-agent-tdcs/atr-simulation.png" alt="ATR 隨疾病嚴重度下降的模擬曲線">
+  <figcaption>模擬結果：Alpha/Theta Ratio 隨 disease severity 單調下降，作為 closed-loop tDCS 的狀態估計與觸發依據。</figcaption>
+</figure>
+
+<figure>
+  <img src="multi-agent-tdcs/co-adaptation.png" alt="Game-Theoretic Co-Adaptation 收斂與 phase portrait">
+  <figcaption>Game-Theoretic Co-Adaptation：不同 learning rate 收斂至共同 potential value，並以 phase portrait 描述 user effort 與 device gain 的共同調適。</figcaption>
+</figure>
+
+<h3>最佳刺激參數</h3>
+
+<table>
+  <thead><tr><th>參數</th><th>建議範圍</th><th>依據</th></tr></thead>
+  <tbody>
+    <tr><td>電流強度</td><td>1.0-1.5 mA</td><td>Goldilocks 效應</td></tr>
+    <tr><td>刺激時長</td><td>20-30 min</td><td>文獻標準方案</td></tr>
+    <tr><td>陽極位置</td><td>F3（左 DLPFC）</td><td>前額-頂葉網絡調控</td></tr>
+    <tr><td>觸發閾值</td><td>θ_low=0.065, θ_high=0.085</td><td>ATR 雙閾值觸發</td></tr>
+  </tbody>
+</table>
+
+<h3>5 個可測試預測</h3>
+
+<p>Agent 2 產出了 5 個可被臨床試驗驗證的預測，每個都包含預測陳述、理論依據、驗證方法和預期效果量：</p>
+
+<ol>
+  <li><strong>Alpha 正常化假說</strong>：ATR 提升 15-25%（Cohen's d = 0.6-0.8）</li>
+  <li><strong>Goldilocks 劑量-反應</strong>：倒 U 型曲線，1.5 mA 最優（η² = 0.10-0.15）</li>
+  <li><strong>功能連接恢復</strong>：wPLI 增加 20-30%（r > 0.4）</li>
+  <li><strong>Closed-loop 優於 Open-loop</strong>：效果量 d = 0.4-0.6，刺激時間減少 30-40%</li>
+  <li><strong>個體化反應預測</strong>：基線 EEG 特徵預測準確率 ≥ 70%（AUC 0.75-0.85）</li>
+</ol>
+
+<h2>Stage 3：回顧性資料分析</h2>
+
+<p>Agent 3 設計了完整的回顧性臨床資料分析方案，包含：</p>
+
+<ul>
+  <li><strong>研究設計</strong>：回顧性世代研究，NIA-AA 2018 診斷框架，MMSE 18-26</li>
+  <li><strong>EEG 分析管線</strong>：MNE-Python 前處理 → 多域特徵提取（頻譜功率 + wPLI + PAC + Sample Entropy）→ 統計分析</li>
+  <li><strong>Patient Stratification</strong>：基於基線 EEG 特徵識別 4 個亞群（輕度 MCI / 中度 MCI / 輕度 AD / 合併精神行為症狀）</li>
+  <li><strong>預測模型</strong>：XGBoost + Random Forest + SVM Stacking，SHAP 可解釋性分析</li>
+</ul>
+
+<h2>Stage 4：前瞻性臨床試驗</h2>
+
+<p>Agent 4 產出了完整的 Phase IIa 臨床試驗方案（CL-tDCS-AD-001）：</p>
+
+<div class="callout callout-info">
+  <strong>試驗概要：</strong>多中心、隨機、雙盲、sham 控制、三臂平行對照<br>
+  N = 135（每組 45 例），每週 5 次 × 4 週 = 20 次療程<br>
+  主要終點：MoCA 變化 + ATR 變化（複合終點）<br>
+  追蹤期：治療後 4/8/12 週
+</div>
+
+<p>方案包含完整的統計分析計畫（LMM + FDR 校正）、DSMB 安全監測計畫、IRB 申請材料，以及 CONSORT flow diagram。</p>
+
+
+<figure>
+  <img src="multi-agent-tdcs/trial-design.svg" alt="CONSORT-style Phase IIa trial design flow diagram">
+  <figcaption>Phase IIa trial design：Closed-loop、Open-loop 與 Sham 三臂平行對照，主要終點為 MoCA + ATR composite。</figcaption>
+</figure>
+
+<h2>整合與發表</h2>
+
+<p>Agent 5 整合所有 Agent 的產出，撰寫了：</p>
+
+<ul>
+  <li><strong>研究論文初稿</strong>（827 行）：摘要 → 引言 → 方法 → 結果 → 討論 → 結論 → 37 篇參考文獻</li>
+  <li><strong>Grant Proposal 核心章節</strong>（646 行）：Specific Aims（3 個 Aim + 5 個假說）→ Significance → Innovation（7 項創新）→ Approach → Timeline（36 個月）→ Expected Outcomes</li>
+</ul>
+
+<h2>踩過的坑：7 個可驗證的教訓</h2>
+
+<p>這個過程並非一帆風順。以下是 7 個實際踩過的坑，以及對應的解決方案：</p>
+
+<h3>坑 1：delegate_task 600 秒超時</h3>
+<p><strong>症狀：</strong>Agent 開始執行但沒在 600 秒內完成。<br>
+<strong>解法：</strong>把大任務拆成 2-3 個小任務並行。例如臨床試驗方案拆成「試驗設計 + 介入方案」和「統計分析 + 安全性 + 倫理」兩個並行子任務。</p>
+
+<h3>坑 2：Windows Python 環境污染</h3>
+<p><strong>症狀：</strong><code>ImportError: cannot import name 'text_encoding' from 'io'</code>，即使使用 <code>uv run</code> 也一樣。<br>
+<strong>原因：</strong>uv 的 Python 3.11 安裝損壞，污染了所有 <code>uv run</code> 環境。<br>
+<strong>解法：</strong>刪除損壞的 3.11 環境，用 3.12 建立乾淨的 venv。</p>
+
+<h3>坑 3：Subagent 無法存取前序產出</h3>
+<p><strong>症狀：</strong>Agent 3 說「我沒有 Agent 2 的模擬結果」。<br>
+<strong>原因：</strong>Subagent 沒有父對話的記憶。<br>
+<strong>解法：</strong>在 context 中明確傳遞檔案路徑（絕對路徑），讓 Subagent 用 read_file 讀取。</p>
+
+<h3>坑 4：跨 Agent 單位不一致</h3>
+<p><strong>症狀：</strong>Agent 1 用 mV，Agent 2 用 V/m。<br>
+<strong>解法：</strong>在 Orchestrator 的初始簡報中定義標準單位，並在每個 Agent 的 context 中重複。</p>
+
+<h3>坑 5：論文缺乏敘事連貫性</h3>
+<p><strong>症狀：</strong>論文讀起來像 5 份獨立報告釘在一起。<br>
+<strong>解法：</strong>給 Agent 5 明確的 story arc：「從計算預測（A1,A2）→ 回顧驗證（A3）→ 前瞻性驗證（A4），每個環節由上一個環節的問題驅動」。</p>
+
+<h3>坑 6：文獻回顧與模型脫節</h3>
+<p><strong>症狀：</strong>Agent 6 產出泛泛的回顧，跟 Agent 1 的具體模型無關。<br>
+<strong>解法：</strong>給 Agent 6 基於 Agent 1 模型組件的具體搜尋詞（例如「neural mass model for Alzheimer's」而非「EEG review」）。</p>
+
+<h3>坑 7：Grant Proposal 缺乏 Specific Aims 結構</h3>
+<p><strong>症狀：</strong>Grant 看起來像論文摘要拉長版。<br>
+<strong>解法：</strong>明確要求 NIH/NSFC 格式的 Specific Aims：1 頁、3 個 Aim、每個含 2-3 個假說、approach 和 expected outcome。</p>
+
+<h2>總覽：24 小時的產出</h2>
+
+<table>
+  <thead><tr><th>產出</th><th>規模</th><th>說明</th></tr></thead>
+  <tbody>
+    <tr><td>Agent 1 模型報告</td><td>931 行 / 48 KB</td><td>三節點 NMM + 完整參數列表</td></tr>
+    <tr><td>Agent 6 文獻回顧</td><td>741 行 / 48 KB</td><td>27 篇文獻 + 方法學比較</td></tr>
+    <tr><td>Agent 2 模擬報告</td><td>970 行 / 34 KB</td><td>可執行 Python 程式 + 4 張圖表</td></tr>
+    <tr><td>Agent 3 分析方案</td><td>541 行 / 22 KB</td><td>回顧性分析 + 1989 行分析管線</td></tr>
+    <tr><td>Agent 4 臨床方案</td><td>712 + 864 行</td><td>試驗方案 + 統計安全計畫</td></tr>
+    <tr><td>Agent 5 論文 + Grant</td><td>827 + 646 行</td><td>論文初稿 + Grant Proposal</td></tr>
+    <tr><td><strong>總計</strong></td><td><strong>~5,700 行 + 2,000+ 行程式碼</strong></td><td><strong>37+ 篇引用</strong></td></tr>
+  </tbody>
+</table>
+
+
+<figure>
+  <img src="multi-agent-tdcs/timeline.png" alt="24 個月研究時程 Gantt 圖">
+  <figcaption>24 個月研究時程：從 NMM model、literature review、simulation、data analysis 到 Phase IIa trial execution。</figcaption>
+</figure>
+
+<h2>反思：AI Agent 在研究中的角色</h2>
+
+<p>這個實驗讓我重新思考「研究」這件事的本質。傳統上，研究者的核心能力是<strong>深度思考</strong>——在文獻、數據和直覺之間反覆迭代，直到浮現出新的洞見。AI Agent 無法取代這個過程，但它可以<strong>大幅壓縮執行時間</strong>。</p>
+
+<p>在這個專案中，我（人類研究者）的角色是：</p>
+
+<ul>
+  <li><strong>定義問題</strong>：決定研究主題、選擇核心論文、設定驗證標準</li>
+  <li><strong>品質管控</strong>：審核每個 Agent 的產出是否合理、前後一致</li>
+  <li><strong>跨域整合</strong>：把計算神經科學、控制理論、臨床醫學的語言翻譯成 Agent 能理解的指令</li>
+  <li><strong>最終判斷</strong>：決定哪些預測值得驗證、哪些參數需要調整</li>
+</ul>
+
+<p>AI Agent 的角色是：</p>
+
+<ul>
+  <li><strong>執行力</strong>：在給定的框架內，快速產出大量結構化內容</li>
+  <li><strong>文獻處理</strong>：搜尋、摘要、比較大量文獻</li>
+  <li><strong>程式撰寫</strong>：撰寫可執行的模擬與分析程式</li>
+  <li><strong>文件生成</strong>：把結構化的發現轉成論文與計畫書</li>
+</ul>
+
+<p>這不是「AI 取代研究者」，而是「AI 成為研究團隊的延伸」。就像一個實驗室裡有博士後、工程師和統計學家——只是這些角色現在由 AI 扮演，而 PI（我）負責方向與品質。</p>
+
+<div class="callout callout-warning">
+  <strong>免責聲明：</strong>本部落格文章描述的研究框架仍處於計算模擬階段，尚未經過臨床驗證。closed-loop tDCS 的臨床效益需要通過嚴格的臨床試驗來確認。本文中的參數建議（1.0-1.5 mA 等）僅基於計算模型推導，不構成臨床治療建議。
+</div>
+
+<h2>下一步</h2>
+
+<p>這個 Multi-Agent 框架本身也是一個可以重複使用的工具。我已經把整個流程封裝成一個 Hermes Agent Skill（<code>multi-agent-research-pipeline</code>），未來可以用在任何需要「計算建模 → 模擬驗證 → 臨床轉化」的研究主題上。</p>
+
+<p>對於 closed-loop tDCS 這個具體主題，下一步是：</p>
+
+<ol>
+  <li><strong>回顧性資料分析</strong>：用 Agent 3 的分析管線處理現有的 tDCS 治療個案 EEG 資料</li>
+  <li><strong>模型精煉</strong>：根據實際資料校正 NMM 參數（改用 RK4 積分、擴展到 6-8 節點）</li>
+  <li><strong>IRB 申請</strong>：提交 CL-tDCS-AD-001 試驗方案</li>
+  <li><strong>概念驗證試驗</strong>：N=66 的 Phase IIa 試驗</li>
+</ol>
+
+<p>如果這個框架對你的研究也有幫助，歡迎聯絡我討論合作可能。</p>
+
+<div class="callout callout-info">
+  <strong>互動簡報版：</strong>本文同步製作了一份互動式 HTML 簡報，可線上直接播放。鍵盤左右鍵切頁、F 鍵全螢幕。
+</div>
+  <div class="footer-note">本文為研究計畫與 agent workflow 整理，臨床介入仍須經 IRB 與正式臨床試驗驗證。</div>
+</main>
+</body>
+</html>
