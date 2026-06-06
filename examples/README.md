@@ -32,6 +32,11 @@ If you put a real, polished paragraph here, the agent will copy your prose voice
 | `faculty_ablation_example.md` | Orchestrator (v2.4, opt-in) | Paired-run protocol to quantify faculty causal contribution |
 | `faculty_suppression_snippets.md` | All agents (v2.4) | Anti-steering snippets when a faculty should be OFF |
 | `alignment_scoreboard.md` | Phase 5e (v2.4) | 8-metric CogBench-analog scored at end-of-run |
+| `handoff_repair_example.md` | Orchestrator (v2.5) | Auto-respawn consumer on faculty death; modes `auto / suggest / log_only` |
+| `project_calibration_example.md` | Orchestrator (v2.5) | Per-project schedule overrides learned from Flow / Repair history |
+| `multi_faculty_ablation_example.md` | Orchestrator (v2.5, opt-in) | 2×2 factorial ablation; main effects + interaction |
+| `continuous_intensity_example.md` | All agents (v2.5) | Continuous 0–1 intensity with 5-level snippet bucket map |
+| `topographic_locality_example.md` | Phase 5e (v2.5) | Scoreboard metric #9 — Binhuraib 2025 inspired spatial-compactness check |
 
 ## How the Orchestrator uses these
 
