@@ -23,6 +23,10 @@ If you put a real, polished paragraph here, the agent will copy your prose voice
 | `router_memory_example.md` | Router (v2.2) | `router_memory.jsonl` schema + Jaccard matching |
 | `judge_ensemble_example.md` | Judge ensemble (v2.2) | Agreement / disagreement / user-declined cases |
 | `cost_log_example.md` | Orchestrator (v2.2) | `cost_log.jsonl` schema + summary + budget-halt |
+| `cognitive_faculty_steering.md` | All agents (v2.3) | 12 steering snippets (4 faculties × 3 intensities) |
+| `cognitive_probes/` | QC at Phase 5c (v2.3) | 4 fMRI-localizer-style probes (Language / Logic / Social / World) |
+| `agent8_reflector_example.md` | Agent 8 — Reflector (v2.3) | DMN-style "3-months-later" reflective read of the winner |
+| `domain_priming_example.md` | Phase 0.75 (v2.3, opt-in) | MiCRo curriculum analog: 3 mini-cases per agent before real pipeline |
 
 ## How the Orchestrator uses these
 
