@@ -18,7 +18,11 @@ If you put a real, polished paragraph here, the agent will copy your prose voice
 | `agent5_example.md` | Agent 5 (Synthesis) | Abstract structure + Specific Aims structure |
 | `agent6_example.md` | Agent 6 (Literature) | Structured literature entry schema |
 | `agent7_monitor_example.md` | Agent 7 (Monitor) | One pass example + one fail-with-ε example |
-| `judge_example.md` | Judge | Decision report with weakest-evidence callout |
+| `judge_example.md` | Judge (single, v2.0/v2.1) | Decision report with weakest-evidence callout |
+| `monitor_strictness_example.md` | Agent 7 (Monitor, v2.2) | Invariant catalog tagged by `min_level`; override flow |
+| `router_memory_example.md` | Router (v2.2) | `router_memory.jsonl` schema + Jaccard matching |
+| `judge_ensemble_example.md` | Judge ensemble (v2.2) | Agreement / disagreement / user-declined cases |
+| `cost_log_example.md` | Orchestrator (v2.2) | `cost_log.jsonl` schema + summary + budget-halt |
 
 ## How the Orchestrator uses these
 
