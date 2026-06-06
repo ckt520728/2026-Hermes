@@ -27,6 +27,11 @@ If you put a real, polished paragraph here, the agent will copy your prose voice
 | `cognitive_probes/` | QC at Phase 5c (v2.3) | 4 fMRI-localizer-style probes (Language / Logic / Social / World) |
 | `agent8_reflector_example.md` | Agent 8 — Reflector (v2.3) | DMN-style "3-months-later" reflective read of the winner |
 | `domain_priming_example.md` | Phase 0.75 (v2.3, opt-in) | MiCRo curriculum analog: 3 mini-cases per agent before real pipeline |
+| `faculty_phase_schedule.md` | Orchestrator (v2.4) | (Phase × Faculty) intensity matrix — MiCRo layer-hierarchy analog |
+| `faculty_flow_example.md` | Orchestrator (v2.4) | `faculty_flow.jsonl` schema; detects faculty death at handoffs |
+| `faculty_ablation_example.md` | Orchestrator (v2.4, opt-in) | Paired-run protocol to quantify faculty causal contribution |
+| `faculty_suppression_snippets.md` | All agents (v2.4) | Anti-steering snippets when a faculty should be OFF |
+| `alignment_scoreboard.md` | Phase 5e (v2.4) | 8-metric CogBench-analog scored at end-of-run |
 
 ## How the Orchestrator uses these
 
