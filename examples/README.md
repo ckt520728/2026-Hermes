@@ -37,6 +37,9 @@ If you put a real, polished paragraph here, the agent will copy your prose voice
 | `multi_faculty_ablation_example.md` | Orchestrator (v2.5, opt-in) | 2×2 factorial ablation; main effects + interaction |
 | `continuous_intensity_example.md` | All agents (v2.5) | Continuous 0–1 intensity with 5-level snippet bucket map |
 | `topographic_locality_example.md` | Phase 5e (v2.5) | Scoreboard metric #9 — Binhuraib 2025 inspired spatial-compactness check |
+| `executable_discovery_template.md` | Orchestrator (v2.6) | AI Scientist-style project skeleton with `experiment.py`, `plot.py`, baseline run, figures, and reports |
+| `claim_ledger_example.md` | All agents + Judge B (v2.6) | Claim typing schema that separates observed, derived, simulated, literature, hypothesis, and unsupported claims |
+| `run_output_contract_example.md` | Agent 3 + Agent 9 (v2.6) | Machine-readable output contract for `final_info.json`, `metrics.json`, and `figure_manifest.json` |
 
 ## How the Orchestrator uses these
 
